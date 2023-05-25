@@ -17,4 +17,4 @@ To verify that the location is a strong secret (i.e., the attacker cannot launch
 (-) Security Group - Faculty of Mathematics and Computer Science, Eindhoven University of Technology (TU/e), Eindhoven, The Netherlands<br />
 
 ## License
-`PPCA` is released under the GNU General Public License v3.0 <a href="LICENSE">license</a>.
+`PPID` is released under the GNU General Public License v3.0 <a href="LICENSE">license</a>.
