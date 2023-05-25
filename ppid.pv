@@ -1,0 +1,167 @@
+(*
+Title
+*)
+
+(* ./proverif diprid.pv *)
+
+(*Dolev-Yao model Open Channel*)
+(*Channel between CI A and drone B*)
+free c:channel. 
+
+(* Channel between CI A and USS *)
+free c2:channel.
+
+
+(* Locations *)
+free locA: bitstring [private].
+
+free locB: bitstring [private].
+weaksecret locB.
+
+(* Types, Constants and Variables *)
+type radius.
+type height.
+type angle.
+type ilist.
+type origin.
+type nonce.
+type seed.
+type ts.
+
+(* Elliptic Curve Generator Point *)
+type G.
+const g: G [data].
+
+(* Public and Private Key *)
+type pkey.
+type skey.
+
+(* Auxiliary Functions *)
+fun map(bitstring, origin):bitstring.
+fun add(bitstring, nonce):bitstring.
+fun add_bb(bitstring, bitstring):bitstring.
+
+fun dif(nonce, bitstring):bitstring.
+fun dif_bb(bitstring, bitstring):bitstring.
+
+fun mul(nonce, G):bitstring.
+
+fun exp(bitstring, pkey):bitstring.
+fun exp_nb(nonce, bitstring):bitstring.
+fun exp_sb(skey, bitstring):bitstring.
+
+fun append_list(pkey, bitstring, bitstring):ilist.
+
+(* Public key Cryptography *)
+fun pk(skey): pkey.
+fun pkenc(bitstring, pkey): bitstring.
+reduc forall m: bitstring, sk: skey; pkdec( pkenc( m,pk(sk)), sk) = m.
+
+(* Signature functions*)
+fun sign(bitstring, skey): bitstring.
+reduc forall m: bitstring, k: skey; getmess(sign(m, k)) = m.
+reduc forall m: bitstring, k: skey; checksign(sign(m, k), pk(k)) = m.
+
+(*Events*)
+event end_PPID_A(pkey).
+event end_PPID_B(pkey).
+event end_USS(pkey).
+
+(* A formal query, specifying the attacker can't ever be leaked the
+actual location during the protocol. *)
+query attacker(locB).
+
+(*Verify the non interference property for the location A and B*)
+(* noninterf locA.
+noninterf locB. *)
+
+(* The process for Drone A*)
+let CI_A (skA:skey, pA:pkey, pkUSS:pkey) = 
+  (* Preparation *)
+  
+  new muA: nonce;
+  new Va: ts;
+  new OA: origin;
+  
+  let posA  = map(locA, OA) in
+  let EA1   = mul(muA, g) in
+  let EA2   = exp(add(posA, muA), pA) in
+
+  let sigmA = sign((EA1, EA2, OA, Va, pA), skA) in
+  out(c, ((EA1, EA2, OA, Va, pA), sigmA));
+
+  (* Comment the previous "let sigmA" and "out" and uncomment the following.
+     Here we can demonstrate the leakage of the location (via bruteforce) when 
+     the nonce is not taken into account. *)
+  (* let sigmA = sign((EA1, exp(posA, pA), OA, Va, pA), skA) in
+  out(c, ((EA1, exp(posA, pA), OA, Va, pA), sigmA)); *)
+
+  in(c, ((UBA1:bitstring, UBA2:bitstring, OB:origin, Vb:ts, pB:pkey, fi_B:bitstring), sigB:bitstring));
+  
+  let check = checksign(sigB, pB) in
+  let mAB = dif_bb(UBA2, exp_sb(skA, UBA1)) in
+
+  out(c2, (pA, UBA1, UBA2, OB, pB, Vb, fi_B, sigB) );
+
+  event end_PPID_B(pB).
+
+   
+
+(* Process for USS *)
+let USS (skCA:skey, pkCA:pkey, pkB:pkey) =
+  (* Receive Msg from CI_A *)
+  
+  in( c2, (pA:pkey, UBA1:bitstring, UBA2:bitstring, OB:origin, pB:pkey, Vb:ts, fi_B:bitstring, sigB:bitstring));
+
+  let check = checksign(sigB, pkB) in
+  let locB = pkdec(fi_B, skCA) in
+  event end_USS(pkCA).
+
+(* The process for Drone B*)
+let droneB (skB:skey, pB:pkey, pkUSS:pkey) = 
+  (* Preparation *)
+ 
+  new vB: nonce;
+  new Vb: ts;
+  new OB: origin;
+  
+  new sB: nonce;
+  new qB: nonce;
+
+  in(c, ((EA1:bitstring, EA2:bitstring, OA:origin, Va:ts, pA:pkey), sigA:bitstring));
+
+  let check = checksign(sigA, pA) in
+
+  let posBA = map(locB, OA) in
+  let UBA1 = add_bb(exp_nb(sB, EA1), mul(qB, g)) in
+  let UBA2 = add_bb(exp_nb(sB, EA2), exp(dif(qB, exp_nb(sB, posBA)),pA)) in
+  
+  let UB = append_list(pA, UBA1, UBA2) in
+
+  let fi_B = pkenc(locB, pkUSS) in
+  
+  let sigmB = sign((UBA1, UBA2, OB, Vb, pB, fi_B), skB) in
+  out(c, ((UBA1, UBA2, OB, Vb, pB, fi_B), sigmB));
+
+  (* Comment the previous "let sigmB" and "out" and uncomment the following.
+     Here we can demonstrate the leakage of the location (via bruteforce) when 
+     the nonce is not taken into account. *)
+  (* let sigmB = sign((exp(posB, pB), UB, OB, Vb, pB), skB) in
+  out(c, ((exp(posB, pB), UB, OB, Vb, pB), sigmB)); *)
+
+  event end_PPID_A(pA).
+
+  process
+    new xA: skey;
+    let XA = pk(xA) in
+    new xB: skey;
+    let XB = pk(xB) in
+    new xUSS: skey;
+    let XUSS = pk(xUSS) in
+    ((!CI_A(xA, XA, XUSS)) | (!droneB(xB, XB, XUSS) | (!USS(xUSS,XUSS,XB)) ))
+
+
+(* Verification summary:
+Weak secret locB is true.
+Query not attacker(locB[]) is true.
+*)
