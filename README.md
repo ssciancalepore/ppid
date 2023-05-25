@@ -1,4 +1,4 @@
-## PPCA: Strangers Sets: Preserving Drones' Location Privacy while Avoiding Invasions of Critical Infrastructures
+## PPID: Strangers Sets: Preserving Drones' Location Privacy while Avoiding Invasions of Critical Infrastructures
 
 ## Formal verification with ProVerif
 The security properties of `PPID` have been verified formally and experimentally by using the open-source tool <a href="https://prosecco.gforge.inria.fr/personal/bblanche/proverif/">ProVerif 2.04</a.
