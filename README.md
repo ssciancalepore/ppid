@@ -1,9 +1,9 @@
 ## PPID: Strangers Sets: Preserving Drones' Location Privacy while Avoiding Invasions of Critical Infrastructures
 
 ## Formal verification with ProVerif
-The security properties of `PPID` have been verified formally and experimentally by using the open-source tool <a href="https://prosecco.gforge.inria.fr/personal/bblanche/proverif/">ProVerif 2.04</a.
+The security properties of `PPID` have been verified formally and experimentally by using the open-source tool <a href="https://prosecco.gforge.inria.fr/personal/bblanche/proverif/">ProVerif 2.04 </a.
 
-To verify the security of the proposed scheme, download the file <a href="ppid.pv">ppca.pv</a> and run: `./proverif ppid.pv | grep "RESULT"`.
+To verify the security of the proposed scheme, download the file <a href="ppid.pv">ppid.pv</a> and run: `./proverif ppid.pv | grep "RESULT"`.
 To verify that the location is a strong secret (i.e., the attacker cannot launch offline guessing attacks on the location of the drone), please follow the guidelines inside the code.
 
 <p align="center">
